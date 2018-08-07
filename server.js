@@ -6,16 +6,22 @@ const http2 = require('spdy');
 const logger = require('morgan');
 const fs = require('fs');
 const app = express();
+const bodyParser = require('body-parser');
+
 /**
  *  files required
  */
 const routes = require('./backend/routes');
+
 /**
  * instantiation of the packages/files used
  */
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
 app.use('/', routes);
 app.use(logger('dev'));
-
 /**
  *  Instantiation of the server
  */
