@@ -21,7 +21,7 @@ class Currency extends Component {
             const url = "/api/currency/" + this.state.base
             fetch(url)
                 .then(res => res.json())
-                .then(currency => this.setState({ date: currency.date, base: currency.base, rates: currency.rates }, () => console.log('Currency fetched...', currency)));
+                .then(currency => { currency.rates[this.state.base] = 1, this.setState({ date: currency.date, base: currency.base, rates: currency.rates }, () => console.log('Currency fetched...', currency))});
         }
     }
 
