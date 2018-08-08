@@ -69,52 +69,147 @@ function getExchangeRate(req, res, next) {
     });
 }
 
+function graphWeek(today, base, exchange) {
+    /**
+    * last 7 days
+    */
+    return new Promise((resolve, reject) => {
+        let count = 0;
+        const result = [];
+        for (let i = 0; i < 7; i++) {
+            let dateFrom = moment().subtract(i, 'd').format('YYYY-MM-DD');
+            const url = "https://exchangeratesapi.io/api/" + dateFrom + "?base=" + base;
+            axios.get(url).then(currency => {
+                const rates = currency.data.rates;
+                for (let elt in rates)
+                    if (elt === exchange) {
+                        dateFrom = moment().subtract(i, 'd').format('DD/MM');
+                        result.push({ date: dateFrom, base: base, exchange: exchange, rate: rates[exchange] });
+                        count++;
+                        if (count === 7) {
+                            result.sort((a, b) => {
+                                return new Date(a.date) - new Date(b.date);
+                            });
+                            resolve(result);
+                        }
+                    }
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    });
+}
+
+function graphMonth(today, base, exchange) {
+    /**
+        * last 30 days
+        */
+    return new Promise((resolve, reject) => {
+        let count = 0;
+        const result = [];
+        for (let i = 0; i < 30; i++) {
+            let dateFrom = moment().subtract(i, 'd').format('YYYY-MM-DD');
+            const url = "https://exchangeratesapi.io/api/" + dateFrom + "?base=" + base;
+            axios.get(url).then(currency => {
+                const rates = currency.data.rates;
+                for (let elt in rates)
+                    if (elt === exchange) {
+                        dateFrom = moment().subtract(i, 'd').format('DD/MM');
+                        result.push({ date: dateFrom, base: base, exchange: exchange, rate: rates[exchange] });
+                        count++;
+                        if (count === 30) {
+                            result.sort((a, b) => {
+                                return new Date(a.date) - new Date(b.date);
+                            });
+                            resolve(result);
+                        }
+                    }
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    });
+}
+
+function graphYear(today, base, exchange) {
+    /**
+         * last 12 months
+         */
+    return new Promise((resolve, reject) => {
+        let count = 0;
+        const result = [];
+        for (let i = 0; i < 12; i++) {
+            let dateFrom = moment().subtract(i, 'months').format('YYYY-MM-DD');
+            const url = "https://exchangeratesapi.io/api/" + dateFrom + "?base=" + base;
+            axios.get(url).then(currency => {
+                const rates = currency.data.rates;
+                dateFrom = moment().subtract(i, 'months').format('MM');
+                for (let elt in rates)
+                    if (elt === exchange) {
+                        result.push({ date: dateFrom, base: base, exchange: exchange, rate: rates[exchange] });
+                        count++;
+                        if (count === 12) {
+                            result.sort((a, b) => {
+                                return new Date(a.date) - new Date(b.date);
+                            });
+                            resolve(result);
+                        }
+                    }
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    });
+}
+
+function graphYears(today, base, exchange) {
+    /**
+         * last 10 years
+         */
+    return new Promise((resolve, reject) => {
+        let count = 0;
+        const result = [];
+        for (let i = 0; i < 10; i++) {
+            let dateFrom = moment().subtract(i, 'year').format('YYYY-MM-DD');
+            const url = "https://exchangeratesapi.io/api/" + dateFrom + "?base=" + base;
+            axios.get(url).then(currency => {
+                const rates = currency.data.rates;
+                dateFrom = moment().subtract(i, 'year').format('YYYY');
+                for (let elt in rates)
+                    if (elt === exchange) {
+                        result.push({ date: dateFrom, base: base, exchange: exchange, rate: rates[exchange] });
+                        count++;
+                        if (count === 10) {
+                            result.sort((a, b) => {
+                                return new Date(a.date) - new Date(b.date);
+                            });
+                            resolve(result);
+                        }
+                    }
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    });
+}
+
 function getGraph(req, res, next) {
     const base = req.query.base;
-    const newBase = req.query.newbase;
-    const url = "https://exchangeratesapi.io/api/" + 2010-01-12 + "?base=" + base;
-    axios.get(url).then(currency => {
-        const rates = currency.data.rates;
-        let result = 0;
-        for (let elt in rates)
-            if (elt === newBase)
-                result = rates[newBase];
-        res.status(200)
-            .json({
-                base: currency.data.base,
-                date: currency.data.date,
-                currency: currency.data.rates
-            });
-    }).catch(err => {
-
+    const exchange = req.query.exchange;
+    const today = moment(new Date()).format('YYYY-MM-DD');
+    const week = graphWeek(today, base, exchange);
+    const month = graphMonth(today, base, exchange);
+    const year = graphYear(today, base, exchange);
+    const years = graphYears(today, base, exchange);
+    Promise.all([week, month, year, years]).then(values => {
+        console.log(values);
+        res.status(200).json({
+            week: values[0],
+            month: values[1],
+            year: values[2],
+            years: values[3]
+        });
     });
-    /**
-     * last 7 days
-     */
-    const dateTo = moment().format('YYYY-DD-MM');
-    for (let i = 1; i < 8; i++){
-        const dateFrom = moment().subtract(i, 'd').format('YYYY-DD-MM');
-    }
-
-    /**
-     * last 30 days
-     */
-    for (let i = 1; i < 31; i++){
-        const dateFrom = moment().subtract(i, 'd').format('YYYY-DD-MM');
-    }
-    /**
-     * last 12 months
-     */
-    for (let i = 1; i < 12; i++){
-        const dateFrom = moment().subtract(i, 'months').format('YYYY-DD-MM');
-    } 
-    /**
-     * last 10 years
-     */ 
-    for (let i = 1; i < 11; i++){
-        const dateFrom = moment().subtract(i, 'year').format('YYYY-DD-MM');
-    } 
-    res.status(200);
 }
 
 //setInterval(intervalFunc, 1500);
