@@ -1,37 +1,35 @@
 import React, { Component } from 'react';
-import '../../main.css';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
-class Currency extends Component {
+const data = [
+    { date: 2019, symbol: 'USD', rate: 2 },
+    { date: 2018, symbol: 'USD', rate: 1.2 },
+];
+
+class Graph extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            date: "",
             base: "",
-            newbase: "",
-            result: 0,
-            rates: {},
-            amount: 0
+            exchange: "",
+            data: [],
+            rates: this.props.rates
         };
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const that = this;
-        if (prevState.base !== this.state.base) {
-            const url = "/api/currency/" + this.state.base;
-            fetch(url)
-                .then(res => res.json())
-                .then(currency => { currency.rates[this.state.base] = 1, this.setState({ date: currency.date, base: currency.base, rates: currency.rates }, that.props.rates(currency.rates),() => console.log('Currency fetched...', currency)) });
+        if (prevState.rates !== this.props.rates) {
+            this.setState({ rates: this.props.rates });
         }
     }
 
     componentDidMount() {
-        const url = "/api/currency/EUR";
-        const that = this;
-        fetch(url)
-            .then(res => res.json())
-            .then(currency => this.setState({ date: currency.date, base: currency.base, rates: currency.rates }, that.props.rates(currency.rates), () => console.log('Currency fetched...', currency)));
+        const url = "/api/graph";
+        const base = "EUR";
+        const newBase = "USD";
+        fetch(url, { base: base, newBase: newBase });
     }
 
     handleChange(event) {
@@ -39,8 +37,8 @@ class Currency extends Component {
             case "base":
                 this.setState({ base: event.target.value });
                 break;
-            case "newbase":
-                this.setState({ newbase: event.target.value });
+            case "exchange":
+                this.setState({ exchange: event.target.value });
                 break;
             case "amount":
                 this.setState({ amount: event.target.value });
@@ -60,7 +58,7 @@ class Currency extends Component {
             },
             body: JSON.stringify({
                 base: this.state.base,
-                newbase: this.state.newbase,
+                exchange: this.state.exchange,
                 amount: this.state.amount
             })
         })
@@ -74,20 +72,17 @@ class Currency extends Component {
         event.preventDefault();
 
     }
-
     render() {
         return (
-            <div className="contain">
-                <h3 className="center result-search">Currency<span className="red">{this.state.value}</span></h3>
+            <div>
                 <form className="form-search" onSubmit={this.handleSubmit}>
                     <label>
-                        <input id="amount" type="text" value={this.state.amount} onChange={this.handleChange} placeholder="amount" />
                         <select id="base" value={this.state.base} onChange={this.handleChange}>
                             {Object.keys(this.state.rates).map(rate =>
                                 <option value={rate}>{rate}</option>
                             )}
                         </select>
-                        <select id="newbase" value={this.state.newbase} onChange={this.handleChange}>
+                        <select id="exchange" value={this.state.exchange} onChange={this.handleChange}>
                             {Object.keys(this.state.rates).map(rate =>
                                 <option value={rate}>{rate}</option>
                             )}
@@ -95,19 +90,18 @@ class Currency extends Component {
                     </label>
                     <button type="submit" id="search-button"></button>
                 </form>
-                result: {this.state.result}
-                date: {this.state.date}
-                base: {this.state.base}
-                <div className="flex-container">
-                    {Object.keys(this.state.rates).map(rate =>
-                        <div id="img">
-                            <p> {rate}: {this.state.rates[rate]}</p>
-                        </div>
-                    )}
-                </div>
+                <LineChart width={600} height={300} data={data}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="rate" stroke="#82ca9d" />
+                </LineChart>
             </div>
         );
     }
 }
 
-export default Currency;
+export default Graph;
